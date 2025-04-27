@@ -7,12 +7,21 @@ const movieRoutes = require('./routes/Biblioteca');
 const loginRoutes = require('./routes/LoginBiblioteca');
 const loginCalendarioRoutes = require('./routes/LoginCalendario');
 const CalendarioRoutes = require('./routes/Calendario');
-const historialRoutes = require('./routes/Historial'); 
+const historialRoutes = require('./routes/Historial');
 
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+// 👇 AQUI CAMBIADO
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://trujillo-lucena-front-end.vercel.app'
+  ],
+  credentials: true
+}));
+
 app.use(express.json());
 
 mongoose.connect(process.env.MONGO_URI)
@@ -21,9 +30,9 @@ mongoose.connect(process.env.MONGO_URI)
 
 app.use('/api/biblioteca', movieRoutes);
 app.use('/api', loginRoutes);
-app.use('/api/logincalendario', loginCalendarioRoutes); 
+app.use('/api/logincalendario', loginCalendarioRoutes);
 app.use('/api/calendario', CalendarioRoutes);
-app.use('/api/historial', historialRoutes);  
+app.use('/api/historial', historialRoutes);
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
