@@ -16,8 +16,8 @@ const app = express();
 // 👇 AQUI CAMBIADO
 app.use(cors({
   origin: [
-    'http://localhost:5173',
-    'https://trujillo-lucena-front-end.vercel.app'
+    'http://localhost:5173', // para desarrollo local
+    'https://trujillolucenaapp.vercel.app' // para producción en Vercel (nuevo dominio)
   ],
   credentials: true
 }));
