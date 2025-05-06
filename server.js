@@ -8,6 +8,7 @@ const loginRoutes = require('./routes/LoginBiblioteca');
 const loginCalendarioRoutes = require('./routes/LoginCalendario');
 const CalendarioRoutes = require('./routes/Calendario');
 const historialRoutes = require('./routes/Historial');
+const supabaseRoutes = require('./supabase/routes/supabaseRoutes');
 
 dotenv.config();
 
@@ -33,6 +34,8 @@ app.use('/api', loginRoutes);
 app.use('/api/logincalendario', loginCalendarioRoutes);
 app.use('/api/calendario', CalendarioRoutes);
 app.use('/api/historial', historialRoutes);
+app.use('/api/supabase', supabaseRoutes);
+
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
