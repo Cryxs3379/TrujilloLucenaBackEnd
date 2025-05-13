@@ -48,19 +48,22 @@ router.post('/reservas', async (req, res) => {
   }
 
   console.log('✅ Reserva insertada:', data[0]);
-  res.status(201).json(data[0]); // 💡 Esto ya no fallará
+  res.status(201).json(data[0]); 
 });
+
+//---------------------------------------------------------------------------
+
 router.post('/confirmar-cliente', async (req, res) => {
   const cliente = req.body;
+  console.log('🧾 Cliente recibido en backend:', cliente);
 
   if (!cliente || !cliente.id) {
-    return res.status(400).json({ error: 'Datos del cliente incompletos o falta el ID de la reserva' });
+    return res.status(400).json({ error: 'Faltan datos del cliente o el ID de la reserva' });
   }
 
-  // 🔧 Excluir el campo "id" antes de insertar
   const { id, ...clienteSinId } = cliente;
 
-  // 1. Insertar en clientes
+  // 1. Insertar en tabla clientes
   const { data: clienteInsertado, error: errorInsertar } = await supabase
     .from('clientes')
     .insert([clienteSinId])
@@ -71,7 +74,25 @@ router.post('/confirmar-cliente', async (req, res) => {
     return res.status(500).json({ error: errorInsertar.message });
   }
 
-  // 2. Eliminar de reservas
+  // 2. Actualizar disponibilidad del coche
+  if (cliente.idcoche) {
+    const cocheId = Number(cliente.idcoche); // ✅ Conversión segura
+    console.log(`➡️ Intentando marcar coche ${cocheId} como no disponible`);
+
+    const { error: errorUpdateCoche } = await supabase
+      .from('coches')
+      .update({ disponible: 'no' }) // 👈 tipo texto
+      .eq('id', cocheId);
+
+    if (errorUpdateCoche) {
+      console.error('❌ Error al actualizar coche:', errorUpdateCoche);
+      return res.status(500).json({ error: errorUpdateCoche.message });
+    }
+
+    console.log(`✅ Coche con ID ${cocheId} marcado como NO disponible`);
+  }
+
+  // 3. Eliminar reserva original
   const { error: errorBorrar } = await supabase
     .from('reservas')
     .delete()
@@ -84,6 +105,8 @@ router.post('/confirmar-cliente', async (req, res) => {
 
   res.status(201).json(clienteInsertado[0]);
 });
+
+
 // 🔹 POST /api/supabase/tetris
 router.post('/tetris', async (req, res) => {
   const nuevaEntrada = req.body;
@@ -101,4 +124,36 @@ router.post('/tetris', async (req, res) => {
 
   console.log('✅ Puntuación guardada:', data[0]);
   res.status(201).json(data[0]);
+});
+
+// 🔹 DELETE /api/supabase/eliminar-cliente/:id
+router.delete('/eliminar-cliente/:id', async (req, res) => {
+  const clienteId = req.params.id;
+  const cocheId = req.query.idcoche;
+
+  // 1. Eliminar cliente
+  const { error: errorDelete } = await supabase
+    .from('clientes')
+    .delete()
+    .eq('id', clienteId);
+
+  if (errorDelete) {
+    console.error('❌ Error al eliminar cliente:', errorDelete);
+    return res.status(500).json({ error: errorDelete.message });
+  }
+
+  // 2. Marcar coche como disponible de nuevo
+  if (cocheId) {
+    const { error: errorUpdate } = await supabase
+      .from('coches')
+      .update({ disponible: 'si' })
+      .eq('id', cocheId);
+
+    if (errorUpdate) {
+      console.error('❌ Error al actualizar coche:', errorUpdate);
+      return res.status(500).json({ error: errorUpdate.message });
+    }
+  }
+
+  res.status(200).json({ message: 'Cliente eliminado y coche marcado como disponible' });
 });
